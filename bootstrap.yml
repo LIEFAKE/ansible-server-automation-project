@@ -1,0 +1,13 @@
+---
+# First run only, with a password: ansible-playbook -i inventory.ini bootstrap.yml -k
+# After this every connection uses the SSH key.
+- name: Copy pub key to host
+  hosts: lab                         # all servers (web + db)
+  gather_facts: false                # facts are not needed here
+
+  tasks:
+    - name: Copy pub key
+      ansible.posix.authorized_key:
+        user: ansible
+        state: present
+        key: "{{ lookup('file', '~/.ssh/ansible_lab.pub') }}"   # read on the control node

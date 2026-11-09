@@ -1,0 +1,17 @@
+---
+- name: Apply a role
+  hosts: lab
+  serial: 1
+  max_fail_percentage: 0
+  become: true
+  roles:
+    - node_exporter
+  post_tasks:
+    - name: Health check
+      ansible.builtin.uri:
+        url: 'http://localhost:{{ node_exporter_port }}/metrics'
+      register: r
+      until: r.status == 200
+      retries: 5
+      delay: 2
+      tags: [always]

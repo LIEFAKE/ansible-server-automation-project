@@ -1,0 +1,52 @@
+---
+# tasks file for roles/node_exporter
+- name: Create user
+  ansible.builtin.user:
+    name: '{{ node_exporter_user }}'
+    create_home: false
+    shell: /usr/sbin/nologin
+    system: true
+  tags: [user]
+
+- name: Download archive
+  ansible.builtin.get_url:
+    url: '{{ node_exporter_url }}/{{ node_exporter_archive }}'
+    checksum: 'sha256:{{ node_exporter_url }}/sha256sums.txt'
+    dest: '/tmp/{{ node_exporter_archive }}'
+    mode: '0644'
+  delegate_to: localhost
+  run_once: true
+  become: false
+  tags: [install]
+
+- name: Unarchive
+  ansible.builtin.unarchive:
+    src: /tmp/{{ node_exporter_archive }}
+    dest: /tmp
+    creates: '/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}/node_exporter'
+  tags: [install]
+
+- name: Copy binaries
+  ansible.builtin.copy:
+    remote_src: true
+    src: '/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}/node_exporter'
+    dest: '{{ node_exporter_bin_path }}/node_exporter'
+    mode: '0755'
+  tags: [install]
+  notify: Restart node_exporter
+
+- name: Create systemd service config
+  ansible.builtin.template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    mode: '0644'
+  tags: [service]
+  notify: Restart node_exporter
+
+- name: Start systemd service
+  ansible.builtin.systemd_service:
+    name: node_exporter
+    enabled: true
+    state: started
+    daemon_reload: true
+  tags: [service]

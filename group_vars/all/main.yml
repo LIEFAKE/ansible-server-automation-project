@@ -1,0 +1,9 @@
+app_user: deploy
+grafana_admin_password: '{{ vault_grafana_admin_password }}'
+several_packages:
+      - curl
+      - htop
+      - tree
+admin_users:
+      - alice
+      - bob

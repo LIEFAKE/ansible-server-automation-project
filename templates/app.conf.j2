@@ -1,0 +1,8 @@
+# service configuration file
+port = {{ app_port }}
+user = {{ app_user }}
+hostname = {{ inventory_hostname }}
+database = {{ groups['db'][0] }}
+{% for host in groups['web'] %}
+peer = {{ host }}:{{ hostvars[host]['app_port'] }}
+{% endfor %}
